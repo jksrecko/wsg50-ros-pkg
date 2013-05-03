@@ -1,0 +1,14 @@
+<launch>
+
+  <node pkg="pr2_gripper_grasp_controller" name="gripper_grasp_posture_controller" type="pr2_gripper_grasp_controller" respawn="true" output="screen">
+    <remap from="gripper_service_grasp_name" to="/gripper_action" />
+    <remap from="gripper_service_move_name" to="/gripper_action" />
+    <remap from="posture_action_name" to="/gripper_grasp_posture_controller" />
+    <remap from="grasp_query_name" to="/gripper_grasp_status" />
+
+    <param name="gripper_grasp_posture_controller/gripper_closed_gap_value" value="0"/>
+    <param name="r_gripper_grasp_posture_controller/gripper_max_effort" value="10.0"/>
+    <param name="gripper_grasp_posture_controller/gripper_open_gap_value" value="11'"/>
+  </node>
+
+</launch>

@@ -1,0 +1,18 @@
+<package>
+  <description brief="wsg_50_grasp_controller">
+
+     wsg_50_grasp_controller
+
+  </description>
+  <author>Denis Štogl</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/wsg_50_grasp_controller</url>
+  <depend package="rospy"/>
+  <depend package="actionlib"/>
+  <depend package="wsg_50_common"/>
+  <depend package="object_manipulation_msgs"/>
+
+</package>
+
+
