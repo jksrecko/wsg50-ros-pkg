@@ -5,8 +5,9 @@ import rospy
 import actionlib
 from wsg_50_common.srv import Move
 from wsg_50_common.msg import Cmd
+from sensor_msgs.msg import JointState
 from object_manipulation_msgs.action import GraspHandPostureExecution
-from object_manipulation_msgs.srv import GraspStatus
+from object_manipulation_msgs.srv import GraspStatus, GraspStatusResponse
 
 class WSG50GraspController:
 
@@ -33,10 +34,16 @@ class WSG50GraspController:
             except rospy.ROSException, e:
                 rospy.loginfo('Waiting for service on %s' gripper_service_move_name)
 
-        self.gripper_closed_gap_value = rospy.get_param('~gripper_closed_gap_value', 10)
-        self.gripper_max_effort = rospy.get_param('~gripper_max_effort', 10)
-        self.gripper_opened_gap_value = rospy.get_param('~gripper_opened_gap_value', 110)
 
+        self.gripper_virtual_joint_name = rospy.get_param('~gripper_virtual_joint_name', 'undefined')
+        if self.gripper_virtual_joint_name == 'undefined':
+            rospy.logerror('Fingers joint names not defined set parameters gripper_virtual_joint_name in the launch file')
+
+
+        self.gripper_closed_gap_value = rospy.get_param('~gripper_closed_gap_value', 10)
+        #self.gripper_max_effort = rospy.get_param('~gripper_max_effort', 10)
+        self.gripper_opened_gap_value = rospy.get_param('~gripper_opened_gap_value', 110)
+        self.gripper_object_presence_threshold = rospy.get_param('~gripper_object_presence_threshold', 1)
 
         # grasp_query_name service Publisher
         grasp_query_name = rospy.resolve_name('grasp_query_name')
@@ -65,22 +72,6 @@ class WSG50GraspController:
                 return
 
             gripper_command.mode = GraspHandPostureExecution.GRASP
-            # maybe joint to gap!!
-
-########### Not implemented in driver simulation and in Move message!!! ############
-#            if not goal.grasp.grasp_posture.effort:
-#                if goal.max_contact_force > 0:
-#                    gripper_command.max_effort = goal.max_contact_force
-#                    rospy.loginfo("WSG grasp controller: limiting max contact force to %f" % gripper_command.max_effort)
-#                else:
-#                    gripper_command.max_effort = self.gripper_max_effort
-#                    rospy.logwarn("WSG grasp controller: effort vector empty in requested grasp, using max force")
-
-#            else:
-#                if (goal.grasp.grasp_posture.effort[0] < goal.max_contact_force || goal.max_contact_force == 0):
-#                    gripper_command.max_effort = goal.grasp.grasp_posture.effort[0]
-#                else:
-#                    gripper_command.max_effort = goal.max_contact_force
 
         elif goal.goal == GraspHandPostureExecution.PRE_GRASP:
 
@@ -91,18 +82,10 @@ class WSG50GraspController:
 
             gripper_command.mode = GraspHandPostureExecution.PRE_GRASP
             gripper_command.pos = goal.grasp.pre_grasp_posture.position[0] * 2
-            # maybe joint to gap!!
-
-########### Not implemented in driver simulation and in Move message!!! ############
-#            if not goal.grasp.pre_grasp_posture.effort:
-#                gripper_command.max_effort = self.gripper_max_effort
-#                rospy.logwarn("WSG grasp controller: effort vector empty in requested grasp, using max force")
-#            else:
-#                gripper_command.max_effort = goal.grasp.pre_grasp_posture.effort[0]
 
         elif goal.goal = GraspHandPostureExecution.RELEASE:
             gripper_command.mode = GraspHandPostureExecution.RELEASE
-            gripper_command.width = self.gripper_opened_gap_value
+            gripper_command.pos = self.gripper_opened_gap_value
             #gripper_command.max_effort = self.gripper_max_effort
 
         else:
@@ -110,20 +93,44 @@ class WSG50GraspController:
             action_server.set_aborted()
             return
 
+        if gripper_command.mode == GraspHandPostureExecution.GRASP:
+            response = gripper_grasp_srv(gripper_command.pos, gripper_command.speed)
+        else:
+            response = gipper_move_srv()
 
-
-
+        if response == 0:
+            action_server.set_succeeded()
+        else:
+            rospy.logwarn("WSG grasp controller: gripper goal not achieved for pre-grasp or release")
+            action_server.set_succeeded()
 
 
     def service_callback(self, req):
 
-        #TODO implementation see: pr2_gripper_grasp_controller.cpp
+        response = GraspStatusResponse()
 
-        return True
+        gripper_value = self.get_gripper_value()
+        min_gripper_opening = self.gripper_object_presence_threshold
+        if gripper_value < self.gripper_object_presence_threshold:
+            rospy.loginfo("Gripper grasp query false: gripper value %f below threshold %f", gripper_value, min_gripper_opening)
+            response.is_hand_occupied = False;
+
+        else:
+            rospy.logdebug("Gripper grasp query true: gripper value %f above threshold %f", gripper_value, min_gripper_opening)
+            response.is_hand_occupied = True;
+
+        return response
 
 
+    def get_gripper_value(self):
 
+        joint_states = rospy.wait_for_message('joint_states', JointState)
 
+        if not joint_states:
+            rospy.logerror("WSG grasp controller: joint states not received")
+            return 0
+
+        return joint_states.position[joint_states.name.index(self.left_finger_joint_name)]
 
 def main(args):
 
