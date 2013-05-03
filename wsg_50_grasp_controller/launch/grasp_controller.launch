@@ -1,17 +1,17 @@
 <launch>
 
   <node pkg="wsg_50_grasp_controller" name="gripper_grasp_posture_controller" type="grasp_controller.py" respawn="true" output="screen">
-    <remap from="gripper_service_grasp_name" to="/gripper_action" />
-    <remap from="gripper_service_move_name" to="/gripper_action" />
+    <remap from="gripper_service_grasp_name" to="/wsg_50_sim_driver/grasp" />
+    <remap from="gripper_service_move_name" to="/wsg_50_sim_driver/move" />
     <remap from="joint_states" to="/joint_states" />
     <remap from="posture_action_name" to="/gripper_grasp_posture_controller" />
     <remap from="grasp_query_name" to="/gripper_grasp_status" />
 
-    <param name="gripper_grasp_posture_controller/gripper_virtual_joint_name" value="base_joint_gripper_right" />
-    <param name="gripper_grasp_posture_controller/gripper_closed_gap_value" value="0"/>
+    <param name="gripper_virtual_joint_name" value="base_joint_gripper_right" />
+    <param name="gripper_closed_gap_value" value="0"/>
 <!--     <param name="gripper_grasp_posture_controller/gripper_max_effort" value="10.0"/> -->
-    <param name="gripper_grasp_posture_controller/gripper_open_gap_value" value="110"/>
-    <param name="gripper_grasp_posture_controller/gripper_object_presence_threshold" value="3"/>
+    <param name="gripper_open_gap_value" value="110"/>
+    <param name="gripper_object_presence_threshold" value="3"/>
   </node>
 
 </launch>
