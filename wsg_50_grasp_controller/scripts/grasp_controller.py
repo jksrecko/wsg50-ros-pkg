@@ -86,7 +86,6 @@ class WSG50GraspController:
         elif goal.goal == GraspHandPostureExecutionGoal.RELEASE:
             gripper_command.mode = GraspHandPostureExecutionGoal.RELEASE
             gripper_command.pos = self.gripper_opened_gap_value
-            #gripper_command.max_effort = self.gripper_max_effort
 
         else:
             rospy.logerr("WSG grasp controller: unknown goal code (%d)" % goal.goal)
@@ -130,7 +129,7 @@ class WSG50GraspController:
             rospy.logerr("WSG grasp controller: joint states not received")
             return 0
 
-        return joint_states.position[joint_states.name.index(self.left_finger_joint_name)]
+        return joint_states.position[joint_states.name.index(self.gripper_virtual_joint_name)]*2*1000
 
 def main(args):
 
