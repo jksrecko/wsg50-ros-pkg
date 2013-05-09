@@ -48,7 +48,7 @@ class WSG50GraspController:
         # grasp_query_name service Publisher
         grasp_query_name = rospy.resolve_name('grasp_query_name')
         self.query_pub = rospy.Service(grasp_query_name, GraspStatus, self.service_callback)
-        rospy.loginfo('WSG50 grasp query service started on topic %s' % grasp_query_name)
+        rospy.loginfo('WSG50 grasp query service started on %s' % grasp_query_name)
 
         # start action server
         posture_action_name = rospy.resolve_name('posture_action_name')
@@ -104,7 +104,7 @@ class WSG50GraspController:
             self.action_server.set_succeeded()
 
 
-    def service_callback(self, req):
+    def service_callback(self, request):
 
         response = GraspStatusResponse()
 
